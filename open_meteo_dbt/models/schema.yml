@@ -1,0 +1,201 @@
+version: 2
+
+models:
+
+  - name: stg_weather
+    description: >
+      Staging model that cleans and standardizes raw weather data
+      received from the Open-Meteo API.
+
+    columns:
+      - name: city
+        description: "City associated with the weather observation."
+        data_tests:
+          - not_null
+
+      - name: country
+        description: "Country associated with the weather observation."
+        data_tests:
+          - not_null
+
+      - name: weather_timestamp
+        description: "Timestamp at which the weather observation was recorded."
+        data_tests:
+          - not_null
+
+      - name: temperature
+        description: "Temperature recorded for the weather observation."
+        data_tests:
+          - not_null
+
+      - name: latitude
+        description: "Latitude of the weather observation location."
+        data_tests:
+          - not_null
+
+      - name: longitude
+        description: "Longitude of the weather observation location."
+        data_tests:
+          - not_null
+
+      - name: relative_humidity
+        description: "Relative humidity recorded for the weather observation."
+        data_tests:
+          - not_null
+
+      - name: precipitation
+        description: "Precipitation recorded for the weather observation."
+        data_tests:
+          - not_null
+
+      - name: rain
+        description: "Rain amount recorded for the weather observation."
+        data_tests:
+          - not_null
+
+      - name: weather_code
+        description: "Weather condition code provided by Open-Meteo."
+        data_tests:
+          - not_null
+
+      - name: wind_speed
+        description: "Wind speed recorded for the weather observation."
+        data_tests:
+          - not_null
+
+      - name: ingested_at
+        description: "Timestamp indicating when the record was ingested."
+        data_tests:
+          - not_null
+
+
+  - name: int_weather
+    description: >
+      Intermediate model that prepares cleaned weather observations
+      for analytical fact and dimension models.
+
+    columns:
+      - name: city
+        description: "City associated with the weather observation."
+        data_tests:
+          - not_null
+
+      - name: country
+        description: "Country associated with the weather observation."
+        data_tests:
+          - not_null
+
+      - name: latitude
+        description: "Latitude of the weather observation location."
+        data_tests:
+          - not_null
+
+      - name: longitude
+        description: "Longitude of the weather observation location."
+        data_tests:
+          - not_null
+
+      - name: weather_timestamp
+        description: "Timestamp of the weather observation."
+        data_tests:
+          - not_null
+
+      - name: temperature
+        description: "Temperature recorded for the weather observation."
+        data_tests:
+          - not_null
+
+
+  - name: dim_city
+    description: >
+      Dimension containing unique cities and their associated countries.
+
+    columns:
+      - name: city
+        description: "City where weather observations were recorded."
+        data_tests:
+          - not_null
+
+      - name: country
+        description: "Country where the city is located."
+        data_tests:
+          - not_null
+
+      - name: latitude
+        description: "Latitude of the city."
+        data_tests:
+          - not_null
+
+      - name: longitude
+        description: "Longitude of the city."
+        data_tests:
+          - not_null
+
+
+  - name: dim_datetime
+    description: >
+      Dimension containing date and time attributes derived from
+      weather observation timestamps.
+
+    columns:
+      - name: weather_timestamp
+        description: "Original timestamp of the weather observation."
+        data_tests:
+          - not_null
+
+      - name: date
+        description: "Calendar date of the weather observation."
+        data_tests:
+          - not_null
+
+      - name: year
+        description: "Year extracted from the observation timestamp."
+        data_tests:
+          - not_null
+
+      - name: month
+        description: "Month extracted from the observation timestamp."
+        data_tests:
+          - not_null
+
+      - name: day
+        description: "Day extracted from the observation timestamp."
+        data_tests:
+          - not_null
+
+      - name: hour
+        description: "Hour extracted from the observation timestamp."
+        data_tests:
+          - not_null
+
+      - name: day_of_week
+        description: "Day of the week represented as a numeric value."
+        data_tests:
+          - not_null
+
+
+  - name: fact_weather
+    description: >
+      Fact model containing weather observations and their
+      associated location and timestamp information.
+
+    columns:
+      - name: city
+        description: "City associated with the weather observation."
+        data_tests:
+          - not_null
+
+      - name: country
+        description: "Country associated with the weather observation."
+        data_tests:
+          - not_null
+
+      - name: weather_timestamp
+        description: "Timestamp of the weather observation."
+        data_tests:
+          - not_null
+
+      - name: temperature
+        description: "Temperature recorded during the observation."
+        data_tests:
+          - not_null

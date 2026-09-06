@@ -1,0 +1,11 @@
+.venv/
+airflow_venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+.env
+logs/
+data/
+open_meteo_dbt/target/
+open_meteo_dbt/logs/

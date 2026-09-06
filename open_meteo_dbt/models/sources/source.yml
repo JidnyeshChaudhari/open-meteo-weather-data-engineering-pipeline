@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+
+  - name: raw
+    description: "Raw weather data loaded from the Open-Meteo API into PostgreSQL."
+
+    schema: raw
+
+    tables:
+
+      - name: raw_weather
+        description: >
+          Raw weather observations extracted from the Open-Meteo API
+          and loaded into PostgreSQL.F
