@@ -88,18 +88,19 @@ cd cd de
 
 ### 2. Install Prerequisites
 
-The project requires:
+Some Importatn requirements: 
 
 - PostgreSQL
-- Python
 - dbt with the PostgreSQL adapter
 - WSL2 with Ubuntu
 - Apache Airflow
 
+#### PostgreSQL
+Create the project database:
 ```
-id,name,description,price,category,stock
-1,Widget Pro,A premium widget,29.99,Tools,150
+weather_db
 ```
+#### PostgreSQL
 
 ### 3. Run with Docker
 
