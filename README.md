@@ -41,12 +41,9 @@ FastAPI Backend
       │
       ▼
 React + Vite Dashboard
+---
+## Architecture
 
-Apache Airflow
-orchestrates:
-Extraction → PostgreSQL → dbt
-
-Features
 🌦️ Weather Data Extraction — extracts hourly weather data from the Open-Meteo API
 🏙️ Multi-City Processing — processes weather data for configured cities
 🗄️ PostgreSQL Storage — stores raw weather data in PostgreSQL
@@ -57,22 +54,34 @@ Features
 ⚡ Live Weather Data — retrieves current weather directly from Open-Meteo
 🔌 FastAPI Backend — provides REST endpoints for weather data
 💻 React Dashboard — displays current weather and historical trends
-Tech Stack
-Layer	Technology
-Weather Source	Open-Meteo API
-Extraction	Python
-Database	PostgreSQL
-Transformation	dbt
-Orchestration	Apache Airflow
-Data Quality	dbt Tests
-Backend	FastAPI
-Frontend	React + Vite
-Charts	Recharts
-Quickstart
-1. Clone the Repository
+---
+
+##Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Weather Source | Open-Meteo API |
+| Extraction | Python |
+| Database | PostgreSQL |
+| Transformation | dbt |
+| Orchestration | Apache Airflow |
+| Data Quality | dbt Tests |
+| Frontend | React + Vite |
+| Backend| FastAPI |
+| Charts| Recharts |
+
+---
+
+##Quickstart
+
+### 1.Clone the Repository
+
+```bash
 git clone https://github.com/JidnyeshChaudhari/de.git
 cd de
-2. Install Prerequisites
+```
+
+### 2. Install Prerequisites
 
 The project requires:
 
