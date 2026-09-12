@@ -8,7 +8,7 @@ import {
 import {
   getCities,
   getCurrentWeather,
-  getHistoricalWeather,
+  getTemperatureTrend,
   getWeatherSummary,
   getCityComparison,
 } from "../services/weatherApi"
@@ -18,43 +18,185 @@ import {
   getRangeDates,
 } from "../utils/dateUtils"
 
+
+const STORAGE_KEY = "weather_dashboard_state"
+
+
+function readStoredDashboard() {
+  try {
+    const stored = localStorage.getItem(
+      STORAGE_KEY
+    )
+
+    if (!stored) {
+      return null
+    }
+
+    return JSON.parse(stored)
+  } catch {
+    return null
+  }
+}
+
+
+function writeStoredDashboard(data) {
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(data)
+    )
+  } catch {
+    // Ignore localStorage errors.
+  }
+}
+
+
 function useWeatherDashboard() {
-  const [cities, setCities] = useState([])
-  const [city, setCity] = useState("Pune")
-
-  const [selectedRange, setSelectedRange] = useState(
-    RANGE_OPTIONS[0]
-  )
-
-  const [currentWeather, setCurrentWeather] = useState(null)
-  const [historicalWeather, setHistoricalWeather] = useState([])
-  const [summary, setSummary] = useState(null)
-  const [comparison, setComparison] = useState([])
-
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [error, setError] = useState("")
 
   /*
-    Used to distinguish the first dashboard load
-    from later city/range changes.
+    ------------------------------------------------------------
+    RESTORE LAST SUCCESSFUL STATE
+    ------------------------------------------------------------
   */
-  const dashboardInitialized = useRef(false)
-  const previousCity = useRef(city)
-  const previousRange = useRef(selectedRange.label)
+
+  const storedDashboard = useMemo(
+    () => readStoredDashboard(),
+    []
+  )
+
+
+  const [cities, setCities] = useState(
+    storedDashboard?.cities || []
+  )
+
+
+  const [city, setCity] = useState(
+    storedDashboard?.city || "Pune"
+  )
+
+
+  const [selectedRange, setSelectedRange] =
+    useState(() => {
+
+      const storedRange =
+        storedDashboard?.selectedRange
+
+      return (
+        RANGE_OPTIONS.find(
+          (range) =>
+            range.label === storedRange
+        ) || RANGE_OPTIONS[0]
+      )
+    })
+
+
+  const [currentWeather, setCurrentWeather] =
+    useState(
+      storedDashboard?.currentWeather || null
+    )
+
+
+  /*
+    ------------------------------------------------------------
+    LAST 7 DAYS TEMPERATURE TREND
+    ------------------------------------------------------------
+  */
+
+  const [temperatureTrend, setTemperatureTrend] =
+    useState(
+      storedDashboard?.temperatureTrend || []
+    )
+
+
+  const [summary, setSummary] = useState(
+    storedDashboard?.summary || null
+  )
+
+
+  const [comparison, setComparison] =
+    useState(
+      storedDashboard?.comparison || []
+    )
+
+
+  const hasStoredData =
+    Boolean(storedDashboard)
+
+
+  /*
+    ------------------------------------------------------------
+    LOADING STATE
+    ------------------------------------------------------------
+  */
+
+  const [loading, setLoading] = useState(
+    !hasStoredData
+  )
+
+
+  const [refreshing, setRefreshing] =
+    useState(false)
+
+
+  const [error, setError] = useState("")
+
+
+  /*
+    ------------------------------------------------------------
+    TRACK DASHBOARD CHANGES
+    ------------------------------------------------------------
+  */
+
+  const dashboardInitialized =
+    useRef(false)
+
+
+  const previousCity =
+    useRef(city)
+
+
+  const previousRange =
+    useRef(selectedRange.label)
+
+
+  /*
+    ------------------------------------------------------------
+    DATE RANGE
+    ------------------------------------------------------------
+
+    For now we are focusing only on
+    Last 7 Days.
+
+    The selected range is still passed
+    through getRangeDates().
+  */
 
   const rangeDates = useMemo(
-    () => getRangeDates(selectedRange.days),
+    () => getRangeDates(selectedRange),
     [selectedRange]
   )
 
+
   /*
-    --------------------------------------------------
+    ------------------------------------------------------------
+    LAST 7 DAYS TREND RANGE
+    ------------------------------------------------------------
+
+    Only Last 7 Days is used for the
+    temperature trend visual.
+  */
+
+  const trendRange = "7d"
+
+
+  /*
+    ------------------------------------------------------------
     CITY LIST
-    --------------------------------------------------
+    ------------------------------------------------------------
   */
 
   async function loadCities() {
+
     const result = await getCities()
 
     setCities(result)
@@ -63,15 +205,24 @@ function useWeatherDashboard() {
       return
     }
 
-    const puneExists = result.some(
-      (item) => item.city.toLowerCase() === "pune"
-    )
 
-    const currentCityExists = result.some(
-      (item) => item.city === city
-    )
+    const puneExists =
+      result.some(
+        (item) =>
+          item.city.toLowerCase() ===
+          "pune"
+      )
+
+
+    const currentCityExists =
+      result.some(
+        (item) =>
+          item.city === city
+      )
+
 
     if (!currentCityExists) {
+
       setCity(
         puneExists
           ? "Pune"
@@ -80,101 +231,52 @@ function useWeatherDashboard() {
     }
   }
 
-  /*
-    --------------------------------------------------
-    CURRENT WEATHER
-    --------------------------------------------------
-  */
-
-  async function loadCurrentWeather() {
-    const current = await getCurrentWeather(city)
-
-    setCurrentWeather(
-      current?.current || current
-    )
-  }
 
   /*
-    --------------------------------------------------
-    HISTORICAL WEATHER + SUMMARY
-    --------------------------------------------------
-
-    Both depend on:
-      - city
-      - selected date range
+    ------------------------------------------------------------
+    FULL DASHBOARD LOAD
+    ------------------------------------------------------------
   */
 
-  async function loadHistoricalAndSummary() {
-    const [history, summaryData] = await Promise.all([
-      getHistoricalWeather(
-        city,
-        rangeDates.start,
-        rangeDates.end
-      ),
+  async function loadDashboard(
+    showRefresh = false
+  ) {
 
-      getWeatherSummary(
-        city,
-        rangeDates.start,
-        rangeDates.end
-      ),
-    ])
-
-    setHistoricalWeather(
-      history || []
-    )
-
-    setSummary(
-      summaryData || null
-    )
-  }
-
-  /*
-    --------------------------------------------------
-    CITY COMPARISON
-    --------------------------------------------------
-
-    Depends only on selected date range.
-  */
-
-  async function loadComparison() {
-    const comparisonData = await getCityComparison(
-      rangeDates.start,
-      rangeDates.end
-    )
-
-    setComparison(
-      comparisonData || []
-    )
-  }
-
-  /*
-    --------------------------------------------------
-    INITIAL LOAD / FULL REFRESH
-    --------------------------------------------------
-  */
-
-  async function loadDashboard(showRefresh = false) {
     try {
+
       setError("")
 
-      if (showRefresh) {
+
+      if (
+        showRefresh ||
+        hasStoredData
+      ) {
+
         setRefreshing(true)
+
       } else {
+
         setLoading(true)
       }
 
+
       const [
         current,
-        history,
+        trend,
         summaryData,
         comparisonData,
       ] = await Promise.all([
+
         getCurrentWeather(city),
 
-        getHistoricalWeather(
+        /*
+          Temperature Trend:
+          ONLY Last 7 Days
+        */
+
+        getTemperatureTrend(
           city,
-          rangeDates.start,
-          rangeDates.end
+          trendRange
         ),
 
         getWeatherSummary(
@@ -189,209 +291,461 @@ function useWeatherDashboard() {
         ),
       ])
 
-      setCurrentWeather(
+
+      const nextCurrentWeather =
         current?.current || current
+
+
+      const nextTemperatureTrend =
+        trend || []
+
+
+      const nextSummary =
+        summaryData || null
+
+
+      const nextComparison =
+        comparisonData || []
+
+
+      setCurrentWeather(
+        nextCurrentWeather
       )
 
-      setHistoricalWeather(
-        history || []
+
+      setTemperatureTrend(
+        nextTemperatureTrend
       )
+
 
       setSummary(
-        summaryData || null
+        nextSummary
       )
 
+
       setComparison(
-        comparisonData || []
+        nextComparison
       )
+
+
+      writeStoredDashboard({
+
+        cities,
+
+        city,
+
+        selectedRange:
+          selectedRange.label,
+
+        currentWeather:
+          nextCurrentWeather,
+
+        temperatureTrend:
+          nextTemperatureTrend,
+
+        summary:
+          nextSummary,
+
+        comparison:
+          nextComparison,
+
+        savedAt: Date.now(),
+      })
+
     } catch (err) {
+
       setError(
         err.message ||
           "Unable to load weather data."
       )
+
     } finally {
+
       setLoading(false)
+
       setRefreshing(false)
     }
   }
 
+
   /*
-    --------------------------------------------------
+    ------------------------------------------------------------
     CITY CHANGE
-    --------------------------------------------------
-
-    City affects:
-      ✓ Current Weather
-      ✓ Historical Weather
-      ✓ Weather Summary
-
-    City does NOT affect:
-      ✗ City Comparison
+    ------------------------------------------------------------
   */
 
   async function handleCityChange() {
-    try {
-      setError("")
-      setLoading(true)
 
-      await Promise.all([
-        loadCurrentWeather(),
-        loadHistoricalAndSummary(),
+    try {
+
+      setError("")
+
+      setRefreshing(true)
+
+
+      const [
+        current,
+        trend,
+        summaryData,
+      ] = await Promise.all([
+
+        getCurrentWeather(city),
+
+        /*
+          Temperature Trend:
+          ONLY Last 7 Days
+        */
+
+        getTemperatureTrend(
+          city,
+          trendRange
+        ),
+
+        getWeatherSummary(
+          city,
+          rangeDates.start,
+          rangeDates.end
+        ),
       ])
+
+
+      const nextCurrentWeather =
+        current?.current || current
+
+
+      const nextTemperatureTrend =
+        trend || []
+
+
+      const nextSummary =
+        summaryData || null
+
+
+      setCurrentWeather(
+        nextCurrentWeather
+      )
+
+
+      setTemperatureTrend(
+        nextTemperatureTrend
+      )
+
+
+      setSummary(
+        nextSummary
+      )
+
+
+      writeStoredDashboard({
+
+        cities,
+
+        city,
+
+        selectedRange:
+          selectedRange.label,
+
+        currentWeather:
+          nextCurrentWeather,
+
+        temperatureTrend:
+          nextTemperatureTrend,
+
+        summary:
+          nextSummary,
+
+        comparison,
+
+        savedAt: Date.now(),
+      })
+
     } catch (err) {
+
       setError(
         err.message ||
           "Unable to load weather data."
       )
+
     } finally {
+
       setLoading(false)
+
+      setRefreshing(false)
     }
   }
 
+
   /*
-    --------------------------------------------------
+    ------------------------------------------------------------
     RANGE CHANGE
-    --------------------------------------------------
-
-    Range affects:
-      ✓ Historical Weather
-      ✓ Weather Summary
-      ✓ City Comparison
-
-    Range does NOT affect:
-      ✗ Current Weather
+    ------------------------------------------------------------
   */
 
   async function handleRangeChange() {
-    try {
-      setError("")
-      setLoading(true)
 
-      await Promise.all([
-        loadHistoricalAndSummary(),
-        loadComparison(),
+    try {
+
+      setError("")
+
+      setRefreshing(true)
+
+
+      const [
+        trend,
+        summaryData,
+        comparisonData,
+      ] = await Promise.all([
+
+        /*
+          Temperature Trend:
+          STILL ONLY Last 7 Days
+        */
+
+        getTemperatureTrend(
+          city,
+          trendRange
+        ),
+
+        getWeatherSummary(
+          city,
+          rangeDates.start,
+          rangeDates.end
+        ),
+
+        getCityComparison(
+          rangeDates.start,
+          rangeDates.end
+        ),
       ])
+
+
+      const nextTemperatureTrend =
+        trend || []
+
+
+      const nextSummary =
+        summaryData || null
+
+
+      const nextComparison =
+        comparisonData || []
+
+
+      setTemperatureTrend(
+        nextTemperatureTrend
+      )
+
+
+      setSummary(
+        nextSummary
+      )
+
+
+      setComparison(
+        nextComparison
+      )
+
+
+      writeStoredDashboard({
+
+        cities,
+
+        city,
+
+        selectedRange:
+          selectedRange.label,
+
+        currentWeather,
+
+        temperatureTrend:
+          nextTemperatureTrend,
+
+        summary:
+          nextSummary,
+
+        comparison:
+          nextComparison,
+
+        savedAt: Date.now(),
+      })
+
     } catch (err) {
+
       setError(
         err.message ||
           "Unable to load weather data."
       )
+
     } finally {
+
       setLoading(false)
+
+      setRefreshing(false)
     }
   }
 
+
   /*
-    --------------------------------------------------
+    ------------------------------------------------------------
     LOAD CITIES
-    --------------------------------------------------
+    ------------------------------------------------------------
   */
 
   useEffect(() => {
+
     loadCities().catch((err) => {
+
       setError(
         err.message ||
           "Unable to load cities."
       )
 
-      setLoading(false)
+
+      if (!hasStoredData) {
+
+        setLoading(false)
+      }
     })
+
   }, [])
 
+
   /*
-    --------------------------------------------------
+    ------------------------------------------------------------
     DASHBOARD DATA FLOW
-    --------------------------------------------------
-
-    First load:
-      → Everything
-
-    City change:
-      → Current + Historical + Summary
-
-    Range change:
-      → Historical + Summary + Comparison
-
-    City + Range change simultaneously:
-      → Everything
+    ------------------------------------------------------------
   */
 
   useEffect(() => {
+
     if (!city) {
       return
     }
 
+
     /*
-      First dashboard load.
+      FIRST DASHBOARD LOAD
     */
 
     if (!dashboardInitialized.current) {
+
       dashboardInitialized.current = true
 
-      previousCity.current = city
-      previousRange.current = selectedRange.label
 
-      loadDashboard()
+      previousCity.current =
+        city
+
+
+      previousRange.current =
+        selectedRange.label
+
+
+      loadDashboard(
+        hasStoredData
+      )
 
       return
     }
+
+
+    /*
+      DETECT CHANGES
+    */
 
     const cityChanged =
       previousCity.current !== city
 
-    const rangeChanged =
-      previousRange.current !== selectedRange.label
 
-    previousCity.current = city
-    previousRange.current = selectedRange.label
+    const rangeChanged =
+      previousRange.current !==
+      selectedRange.label
+
+
+    previousCity.current =
+      city
+
+
+    previousRange.current =
+      selectedRange.label
+
 
     /*
-      Both dimensions changed.
-      Safest option is to load everything.
+      CITY + RANGE changed
     */
 
-    if (cityChanged && rangeChanged) {
-      loadDashboard()
+    if (
+      cityChanged &&
+      rangeChanged
+    ) {
+
+      loadDashboard(true)
+
       return
     }
 
+
     /*
-      Only city changed.
+      ONLY CITY changed
     */
 
     if (cityChanged) {
+
       handleCityChange()
+
       return
     }
 
+
     /*
-      Only range changed.
+      ONLY RANGE changed
     */
 
     if (rangeChanged) {
+
       handleRangeChange()
     }
-  }, [city, selectedRange])
+
+  }, [
+    city,
+    selectedRange,
+  ])
+
+
+  /*
+    ------------------------------------------------------------
+    RETURN
+    ------------------------------------------------------------
+  */
 
   return {
+
     cities,
+
     city,
+
     setCity,
 
     selectedRange,
+
     setSelectedRange,
 
     currentWeather,
-    historicalWeather,
+
+    temperatureTrend,
+
     summary,
+
     comparison,
 
     loading,
+
     refreshing,
+
     error,
 
     loadDashboard,
   }
 }
+
 
 export default useWeatherDashboard

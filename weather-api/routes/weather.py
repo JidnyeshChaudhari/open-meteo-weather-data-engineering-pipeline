@@ -8,6 +8,7 @@ from services.weather_service import (
     get_current_weather,
     get_weather_history,
     get_weather_summary,
+    get_temperature_trend,
     compare_cities as compare_cities_service,
 )
 
@@ -95,6 +96,21 @@ def weather_summary(
         city,
         start,
         end,
+    )
+
+
+# ============================================================
+# TEMPERATURE TREND
+# ============================================================
+
+@router.get("/weather/trend")
+def temperature_trend(
+    city: str = Query(..., min_length=1),
+    range: str = Query(..., min_length=1),
+):
+    return get_temperature_trend(
+        city,
+        range,
     )
 
 

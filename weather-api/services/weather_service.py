@@ -294,6 +294,145 @@ def get_weather_history(city, start: date, end: date):
 
 
 # ============================================================
+# TEMPERATURE TREND
+# ============================================================
+
+def get_temperature_trend(city, range_name):
+    connection = None
+
+    try:
+        connection = get_connection()
+
+        # ----------------------------------------------------
+        # Daily aggregation
+        #
+        # Used for:
+        # 7d
+        # 15d
+        # month
+        # ----------------------------------------------------
+
+        if range_name in {
+            "7d",
+            "15d",
+            "month",
+        }:
+
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT
+                        weather_date,
+                        avg_temperature
+                    FROM raw.fact_weather_daily
+                    WHERE LOWER(city) = LOWER(%s)
+                       AND weather_date BETWEEN %s AND %s
+                    ORDER BY weather_date
+                    """,
+                    (city,),
+
+                    
+                )
+
+                rows = cursor.fetchall()
+
+            data = []
+
+            for row in rows:
+                data.append(
+                    {
+                        "weather_date": (
+                            row[0].isoformat()
+                            if row[0]
+                            else None
+                        ),
+                        "avg_temperature": (
+                            float(row[1])
+                            if row[1] is not None
+                            else None
+                        ),
+                    }
+                )
+
+            return {
+                "city": city,
+                "range": range_name,
+                "count": len(data),
+                "data": data,
+            }
+
+
+        # ----------------------------------------------------
+        # Monthly aggregation
+        #
+        # Used for:
+        # 6m
+        # 1y
+        # ----------------------------------------------------
+
+        if range_name in {
+            "6m",
+            "1y",
+        }:
+
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT
+                        weather_month,
+                        avg_temperature
+                    FROM raw.fact_weather_monthly
+                    WHERE LOWER(city) = LOWER(%s)
+                    ORDER BY weather_month
+                    """,
+                    (city,),
+                )
+
+                rows = cursor.fetchall()
+
+            data = []
+
+            for row in rows:
+                data.append(
+                    {
+                        "weather_month": (
+                            row[0].strftime("%Y-%m")
+                            if row[0]
+                            else None
+                        ),
+                        "avg_temperature": (
+                            float(row[1])
+                            if row[1] is not None
+                            else None
+                        ),
+                    }
+                )
+
+            return {
+                "city": city,
+                "range": range_name,
+                "count": len(data),
+                "data": data,
+            }
+
+
+        # ----------------------------------------------------
+        # Invalid range
+        # ----------------------------------------------------
+
+        return {
+            "city": city,
+            "range": range_name,
+            "count": 0,
+            "data": [],
+        }
+
+    finally:
+        if connection:
+            connection.close()
+
+
+# ============================================================
 # WEATHER SUMMARY
 # ============================================================
 
@@ -519,6 +658,10 @@ def compare_cities(start: date, end: date):
         current_weather = fetch_open_meteo_multiple_current(
             locations
         )
+
+        # ----------------------------------------------------
+        # Build response
+        # ----------------------------------------------------
 
         comparison = []
 

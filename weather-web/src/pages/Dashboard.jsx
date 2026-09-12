@@ -9,7 +9,9 @@ import useWeatherDashboard from "../hooks/useWeatherDashboard"
 
 import { formatCurrentTime } from "../utils/dateUtils"
 
+
 function Dashboard() {
+
   const {
     cities,
     city,
@@ -17,7 +19,7 @@ function Dashboard() {
     selectedRange,
     setSelectedRange,
     currentWeather,
-    historicalWeather,
+    temperatureTrend,
     summary,
     comparison,
     loading,
@@ -26,8 +28,10 @@ function Dashboard() {
     loadDashboard,
   } = useWeatherDashboard()
 
+
   return (
     <div className="dashboard">
+
       <Header
         currentWeather={currentWeather}
         refreshing={refreshing}
@@ -35,12 +39,15 @@ function Dashboard() {
         formatCurrentTime={formatCurrentTime}
       />
 
+
       <main className="dashboard-content">
+
         <CitySelector
           cities={cities}
           city={city}
           onCityChange={setCity}
         />
+
 
         {error && (
           <div className="dashboard-error">
@@ -48,29 +55,36 @@ function Dashboard() {
           </div>
         )}
 
+
         <CurrentWeather
           currentWeather={currentWeather}
         />
 
+
         <TemperatureTrend
-          historicalWeather={historicalWeather}
+          temperatureTrend={temperatureTrend}
           loading={loading}
           selectedRange={selectedRange}
           onRangeChange={setSelectedRange}
         />
+
 
         <WeatherSummary
           summary={summary}
           selectedRange={selectedRange}
         />
 
+
         <CityComparison
           comparison={comparison}
           selectedRange={selectedRange}
         />
+
       </main>
+
     </div>
   )
 }
+
 
 export default Dashboard

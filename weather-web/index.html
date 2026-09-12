@@ -2,12 +2,60 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>weather-web</title>
+
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/favicon.svg"
+    />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>Weather Analytics</title>
+
+    <style>
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #f6f8fb;
+      }
+
+      body {
+        min-width: 320px;
+      }
+
+      #root {
+        min-height: 100vh;
+        background: #f6f8fb;
+      }
+
+      /*
+        Keep the same page surface visible
+        while React is mounting.
+      */
+      .app-startup-shell {
+        min-height: 100vh;
+        width: 100%;
+        background: #f6f8fb;
+      }
+    </style>
   </head>
+
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <div id="root">
+      <div
+        class="app-startup-shell"
+        aria-hidden="true"
+      ></div>
+    </div>
+
+    <script
+      type="module"
+      src="/src/main.jsx"
+    ></script>
   </body>
 </html>

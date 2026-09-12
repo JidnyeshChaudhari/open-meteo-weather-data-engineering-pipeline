@@ -13,6 +13,8 @@ OPEN_METEO_BASE_URL = "https://api.open-meteo.com/v1/forecast"
 OPEN_METEO_USER_AGENT = "Weather-Analytics-API/1.0"
 
 
+# Full variables required by the single-city current
+# weather endpoint.
 CURRENT_VARIABLES = ",".join(
     [
         "temperature_2m",
@@ -28,6 +30,10 @@ CURRENT_VARIABLES = ",".join(
         "visibility",
     ]
 )
+
+
+# Only temperature is required by the city comparison endpoint.
+COMPARISON_VARIABLES = "temperature_2m"
 
 
 # ============================================================
@@ -85,17 +91,11 @@ def fetch_open_meteo_current(latitude, longitude):
 
 def fetch_open_meteo_multiple_current(locations):
     """
-    Fetch current weather for multiple cities using one
-    Open-Meteo request.
+    Fetch current temperature for multiple cities using
+    one Open-Meteo request.
 
-    locations:
-        [
-            {
-                "city": "Pune",
-                "latitude": 18.52,
-                "longitude": 73.86
-            }
-        ]
+    Only temperature_2m is requested because the comparison
+    endpoint only uses the current temperature.
     """
 
     if not locations:
@@ -115,7 +115,7 @@ def fetch_open_meteo_multiple_current(locations):
         {
             "latitude": latitudes,
             "longitude": longitudes,
-            "current": CURRENT_VARIABLES,
+            "current": COMPARISON_VARIABLES,
             "timezone": "auto",
         }
     )

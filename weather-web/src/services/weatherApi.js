@@ -128,6 +128,36 @@ export async function getTemperatureHistory(
 
 
 // ---------------------------------------------------------
+// TEMPERATURE TREND
+// ---------------------------------------------------------
+
+export async function getTemperatureTrend(
+  city,
+  range
+) {
+  if (!city) {
+    throw new Error(
+      "Please select a city."
+    )
+  }
+
+  if (!range) {
+    throw new Error(
+      "Please select a temperature trend range."
+    )
+  }
+
+  const data = await apiRequest(
+    `/weather/trend?city=${encodeURIComponent(
+      city
+    )}&range=${encodeURIComponent(range)}`
+  )
+
+  return data.data || []
+}
+
+
+// ---------------------------------------------------------
 // WEATHER SUMMARY
 // ---------------------------------------------------------
 
