@@ -95,14 +95,34 @@ Some Importatn requirements:
 - WSL2 with Ubuntu
 - Apache Airflow
 
-#### PostgreSQL
+#### 1. PostgreSQL
 Create the project database:
 ```
 weather_db
 ```
-#### PostgreSQL
+#### 2. Python Environment
+Create the project virtual environment:
+```
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+Install Python dependencies:
+```
+pip install -r requirements.txt
+```
 
-### 3. Run with Docker
+#### 4. dbt
+pip install -r requirements.txt
+```
+pip install dbt-core dbt-postgres
+```
+#### 5. WSL2 + Ubuntu
+Install WSL2 and Ubuntu from an Administrator PowerShell:
+```
+wsl --install
+```
+
+
 
 ```bash
 docker-compose up --build
