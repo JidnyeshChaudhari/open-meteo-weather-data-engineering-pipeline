@@ -1,6 +1,9 @@
+# Open-Meteo Weather Data Engineering Pipeline
+
 An end-to-end weather data engineering pipeline that extracts weather data from the Open-Meteo API, stores raw data in PostgreSQL, transforms it using dbt, orchestrates the workflow with Apache Airflow, and provides weather data through a FastAPI backend and React dashboard.
 
 ---
+
 ## Architecture
 
 ```text
@@ -43,7 +46,7 @@ Apache Airflow
 orchestrates:
 Extraction → PostgreSQL → dbt
 
-#Features
+Features
 🌦️ Weather Data Extraction — extracts hourly weather data from the Open-Meteo API
 🏙️ Multi-City Processing — processes weather data for configured cities
 🗄️ PostgreSQL Storage — stores raw weather data in PostgreSQL
@@ -54,25 +57,18 @@ Extraction → PostgreSQL → dbt
 ⚡ Live Weather Data — retrieves current weather directly from Open-Meteo
 🔌 FastAPI Backend — provides REST endpoints for weather data
 💻 React Dashboard — displays current weather and historical trends
-
-
-#Tech Stack
-
-| Layer            | Technology     |
-| ---------------- | -------------- |
-| Weather Source   | Open-Meteo API |
-| Extraction       | Python         |
-| Database         | PostgreSQL     |
-| Transformation   | dbt            |
-| Orchestration    | Apache Airflow |
-| Data Quality     | dbt Tests      |
-| Backend          | FastAPI        |
-| Frontend         | React + Vite   |
-| Charts           | Recharts       |
-
-
-# QuickStart
-
+Tech Stack
+Layer	Technology
+Weather Source	Open-Meteo API
+Extraction	Python
+Database	PostgreSQL
+Transformation	dbt
+Orchestration	Apache Airflow
+Data Quality	dbt Tests
+Backend	FastAPI
+Frontend	React + Vite
+Charts	Recharts
+Quickstart
 1. Clone the Repository
 git clone https://github.com/JidnyeshChaudhari/de.git
 cd de
@@ -93,7 +89,7 @@ Create the project database:
 
 weather_db
 
-PostgreSQL is used for storing the raw weather data and dbt models.
+PostgreSQL is used to store the raw weather data and transformed dbt models.
 
 Python Environment
 
@@ -111,7 +107,7 @@ Install dbt with the PostgreSQL adapter:
 
 pip install dbt-core dbt-postgres
 
-The dbt project is located in:
+The dbt project is located at:
 
 open_meteo_dbt/
 WSL2 + Ubuntu
@@ -126,7 +122,7 @@ Apache Airflow
 
 Airflow is installed inside WSL2 Ubuntu.
 
-Create the Airflow environment:
+Create the Airflow virtual environment:
 
 python3 -m venv ~/airflow_venv
 source ~/airflow_venv/bin/activate
@@ -134,9 +130,7 @@ source ~/airflow_venv/bin/activate
 Install Airflow:
 
 pip install apache-airflow
-
-
-#Configuration
+Configuration
 Weather Locations
 
 Weather locations are configured in:
@@ -147,7 +141,7 @@ Update this file when adding or changing cities processed by the extraction pipe
 
 PostgreSQL
 
-Create the database:
+Create the project database:
 
 weather_db
 
@@ -157,17 +151,14 @@ Database credentials should remain local and must not be committed to GitHub.
 
 dbt
 
-The dbt configuration is located in:
+The dbt project is located at:
 
 open_meteo_dbt/
 
 Configure the PostgreSQL connection so that dbt points to:
 
 weather_db
-
-
-# Running the Pipeline
-
+Running the Pipeline
 1. Extract Weather Data
 
 From the project root:
@@ -198,10 +189,9 @@ dbt run
 
 This builds the staging, intermediate, and mart models.
 
+Airflow
 
-# Airflow
-
-Apache Airflow is used to orchestrate the complete data pipeline.
+Apache Airflow orchestrates the complete data pipeline.
 
 The DAG is located at:
 
@@ -233,14 +223,47 @@ Start Airflow:
 
 airflow standalone
 
-The Airflow environment used by this project is:
+The Airflow environment used by the project is:
 
 /home/jidny/airflow_venv/
+Backend
 
+The FastAPI backend is located at:
 
+weather-api/
 
-# Project Structure
+The backend provides weather data through REST endpoints, including:
 
+Current weather
+Historical weather
+City information
+
+Current weather is retrieved directly from Open-Meteo, while historical weather data is served from the PostgreSQL-backed data pipeline.
+
+Frontend
+
+The React + Vite dashboard is located at:
+
+weather-web/
+
+The dashboard provides:
+
+Current weather cards
+City selection
+Temperature trends
+Historical weather analysis
+Multiple time-range views
+City comparison
+
+Install frontend dependencies:
+
+cd weather-web
+npm install
+
+Start the development server:
+
+npm run dev
+Project Structure
 de/
 ├── airflow/
 │   └── dags/                  # Airflow DAGs and pipeline orchestration
@@ -262,28 +285,14 @@ de/
 ├── requirements.txt           # Python dependencies
 └── README.md
 
-#Environment Variables
-| **Variable**         | **Description**                           |
-| -------------------- | ----------------------------------------- |
-| `POSTGRES_HOST`      | PostgreSQL host                           |
-| `POSTGRES_PORT`      | PostgreSQL port                           |
-| `POSTGRES_DB`        | PostgreSQL database name                  |
-| `POSTGRES_USER`      | PostgreSQL username                       |
-| `POSTGRES_PASSWORD`  | PostgreSQL password                       |
-| `OPEN_METEO_API_URL` | Open-Meteo API base URL                   |
 
+Environment Variables
+Variable	Description
+POSTGRES_HOST	PostgreSQL host
+POSTGRES_PORT	PostgreSQL port
+POSTGRES_DB	PostgreSQL database name
+POSTGRES_USER	PostgreSQL username
+POSTGRES_PASSWORD	PostgreSQL password
+OPEN_METEO_API_URL	Open-Meteo API base URL
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Keep database credentials and other environment-specific values local. Do not commit secrets to GitHub.
