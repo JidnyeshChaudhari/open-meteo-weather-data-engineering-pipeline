@@ -1,4 +1,4 @@
-# 🛒 E-Commerce Copilot
+# pen-Meteo Weather Data Engineering Pipeline
 
 An end-to-end weather data engineering pipeline that extracts weather data from the Open-Meteo API, stores raw data in PostgreSQL, transforms it using dbt, orchestrates the workflow with Apache Airflow, and provides weather data through a FastAPI backend and React dashboard.
 
@@ -121,70 +121,96 @@ Install WSL2 and Ubuntu from an Administrator PowerShell:
 ```
 wsl --install
 ```
-
-
-
-```bash
-docker-compose up --build
+#### 5. Apache Airflow
+Airflow is installed inside WSL2 Ubuntu
+Create the Airflow virtual environment:
+```
+python3 -m venv ~/airflow_venv
+source ~/airflow_venv/bin/activate
+```
+Install Airflow:
+```
+pip install apache-airflow
 ```
 
-### 4. Access
+### 3.Running the Pipeline
 
-- Frontend: http://localhost:5173
-- API docs: http://localhost:8000/docs
-- Kafka UI: http://localhost:8080
+#### 1. Extract Weather Data
 
----
-
-## Local Development (without Docker)
-
-```bash
-# Backend
-cd backend
-pip install -r requirements.txt
-uvicorn api.main:app --reload
-
-# Worker (separate terminal)
-python -m workers.inference_worker
-
-# Frontend
-cd frontend
-npm install
-npm run dev
+From the project root:
 ```
+python src/extraction/weather_extractor.py
+```
+The extractor retrieves weather data from Open-Meteo and stores the raw response under:
+
+```
+data/raw/
+```
+#### 2. Load Data into PostgreSQL
+
+Run:
+```
+python insert_weather.py
+```
+
+The extracted data is loaded into:
+```
+raw.raw_weather
+```
+#### 3. Run dbt
+
+Move into the dbt project:
+```
+cd open_meteo_dbt
+```
+
+Run the transformations:
+```
+dbt run
+```
+This builds the staging, intermediate, and mart models.
+
 
 ---
 
 ## Project Structure
 
 ```
-ecommerce-copilot/
-├── backend/
-│   ├── agents/         # LangChain ReAct agent + tools
-│   ├── api/            # FastAPI app, routes, WebSocket
-│   ├── core/           # Config, logging, dependencies
-│   ├── kafka/          # Producer/consumer abstractions
-│   ├── retrieval/      # LlamaIndex indexer + FAISS store
-│   └── workers/        # Async inference worker
-├── frontend/           # React + Vite app
-├── data/               # Drop CSV/JSON product dumps here
-├── docker/             # Dockerfiles
-├── scripts/            # Seed data, index builder scripts
-├── docker-compose.yml
-└── .env.example
+de/
+├── airflow/
+│   └── dags/                  # Airflow DAGs and pipeline orchestration
+├── config/                    # Weather location configuration
+├── open_meteo_dbt/            # dbt transformations and data quality tests
+│   ├── models/
+│   └── tests/
+├── src/
+│   └── extraction/            # Weather data extraction and backfill
+├── weather-api/               # FastAPI backend
+│   ├── database/
+│   ├── external/
+│   ├── routes/
+│   └── services/
+├── weather-web/               # React + Vite dashboard
+├── data/                      # Local raw and processed data
+├── Dockerfile                 # Container configuration
+├── insert_weather.py          # PostgreSQL loading
+├── requirements.txt           # Python dependencies
+└── README.md
 ```
 
 ---
 
 ## Environment Variables
 
-| Variable | Description |
-|---|---|
-| `OPENAI_API_KEY` | Your OpenAI API key |
-| `KAFKA_BOOTSTRAP_SERVERS` | Kafka broker address (default: `localhost:9092`) |
-| `FAISS_INDEX_PATH` | Path to persist FAISS index |
-| `PRODUCTS_DATA_PATH` | Path to CSV/JSON product file |
-| `LOG_LEVEL` | `DEBUG` / `INFO` / `WARNING` |
+| **Variable**         | **Description**          |
+| -------------------- | ------------------------ |
+| `POSTGRES_HOST`      | PostgreSQL host          |
+| `POSTGRES_PORT`      | PostgreSQL port          |
+| `POSTGRES_DB`        | PostgreSQL database name |
+| `POSTGRES_USER`      | PostgreSQL username      |
+| `POSTGRES_PASSWORD`  | PostgreSQL password      |
+| `OPEN_METEO_API_URL` | Open-Meteo API base URL  |
+
 
 ---
 
