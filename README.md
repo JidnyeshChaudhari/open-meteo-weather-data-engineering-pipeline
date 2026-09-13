@@ -1,4 +1,4 @@
-# pen-Meteo Weather Data Engineering Pipeline
+# Open-Meteo Weather Data Engineering Pipeline
 
 An end-to-end weather data engineering pipeline that extracts weather data from the Open-Meteo API, stores raw data in PostgreSQL, transforms it using dbt, orchestrates the workflow with Apache Airflow, and provides weather data through a FastAPI backend and React dashboard.
 
@@ -88,19 +88,19 @@ cd cd de
 
 ### 2. Install Prerequisites
 
-Some Importatn requirements: 
+Some Important requirements: 
 
 - PostgreSQL
 - dbt with the PostgreSQL adapter
 - WSL2 with Ubuntu
 - Apache Airflow
 
-#### 1. PostgreSQL
+### 3. PostgreSQL Setup
 Create the project database:
 ```
 weather_db
 ```
-#### 2. Python Environment
+### 4. Python Environment
 Create the project virtual environment:
 ```
 python -m venv .venv
@@ -111,65 +111,92 @@ Install Python dependencies:
 pip install -r requirements.txt
 ```
 
-#### 4. dbt
-pip install -r requirements.txt
+### 5. WSL + Ubuntu Setup
+Airflow is run inside WSL Ubuntu.
 ```
-pip install dbt-core dbt-postgres
+cd /mnt/c/Users/<your-windows-username>/Desktop/de
 ```
-#### 5. WSL2 + Ubuntu
-Install WSL2 and Ubuntu from an Administrator PowerShell:
+Create the Airflow virtual environment
 ```
-wsl --install
+python3 -m venv airflow_venv
 ```
-#### 5. Apache Airflow
-Airflow is installed inside WSL2 Ubuntu
-Create the Airflow virtual environment:
+Activate the environment
 ```
-python3 -m venv ~/airflow_venv
 source ~/airflow_venv/bin/activate
 ```
-Install Airflow:
+Install Apache Airflow
 ```
 pip install apache-airflow
 ```
+Verify the installation:
+```
+airflow version
+```
 
-### 3.Running the Pipeline
+## Running the Pipeline
 
-#### 1. Extract Weather Data
+### 1. Extract Weather Data
 
 From the project root:
 ```
 python src/extraction/weather_extractor.py
 ```
-The extractor retrieves weather data from Open-Meteo and stores the raw response under:
+The extractor retrieves weather data from the Open-Meteo API and stores the raw response for the next stage of the pipeline.
 
-```
-data/raw/
-```
-#### 2. Load Data into PostgreSQL
+### 2. Load Data into PostgreSQL
 
 Run:
 ```
-python insert_weather.py
+python src/load/load_weather.py
 ```
-
 The extracted data is loaded into:
-```
-raw.raw_weather
-```
-#### 3. Run dbt
 
-Move into the dbt project:
+### 3. Run dbt
+
+Move into the dbt project
 ```
 cd open_meteo_dbt
 ```
-
-Run the transformations:
+Run the dbt models
 ```
 dbt run
 ```
-This builds the staging, intermediate, and mart models.
+Run the dbt tests:
+```
+dbt test
+```
+dbt builds the staging, intermediate, dimension, and fact models inside PostgreSQL.
 
+### 4. Run the Pipeline with Airflow
+For automated pipeline execution, use Apache Airflow.
+Activate the Airflow environment:
+```
+cd /mnt/c/Users/<your-windows-username>/Desktop/de 
+source ~/airflow_venv/bin/activate
+```
+Airflow 3 requires the following processes for this project.
+
+#### 1. Terminal 1 — Airflow API Server
+```
+cd /mnt/c/Users/<your-windows-username>/Desktop/de 
+source ~/airflow_venv/bin/activate
+airflow api-server --port 8080
+```
+#### 2. Terminal 2 — Airflow Scheduler
+Open another WSL terminal
+```
+cd /mnt/c/Users/<your-windows-username>/Desktop/de 
+source ~/airflow_venv/bin/activate
+airflow scheduler
+```
+#### 3.Terminal 3 — Airflow DAG Processor
+Open another WSL terminal:
+```
+cd /mnt/c/Users/<your-windows-username>/Desktop/de 
+source ~/airflow_venv/bin/activate 
+airflow dag-processor
+```
+Keep all three Airflow processes running.
 
 ---
 
