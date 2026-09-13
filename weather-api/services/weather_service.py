@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from database.connection import get_connection
 from external.open_meteo import (
@@ -303,6 +303,8 @@ def get_temperature_trend(city, range_name):
     try:
         connection = get_connection()
 
+        today = date.today()
+
         # ----------------------------------------------------
         # Daily aggregation
         #
@@ -318,6 +320,18 @@ def get_temperature_trend(city, range_name):
             "month",
         }:
 
+            if range_name == "7d":
+                start_date = today - timedelta(days=6)
+                end_date = today
+
+            elif range_name == "15d":
+                start_date = today - timedelta(days=14)
+                end_date = today
+
+            else:
+                start_date = today.replace(day=1)
+                end_date = today
+
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
@@ -326,12 +340,14 @@ def get_temperature_trend(city, range_name):
                         avg_temperature
                     FROM raw.fact_weather_daily
                     WHERE LOWER(city) = LOWER(%s)
-                       AND weather_date BETWEEN %s AND %s
+                      AND weather_date BETWEEN %s AND %s
                     ORDER BY weather_date
                     """,
-                    (city,),
-
-                    
+                    (
+                        city,
+                        start_date,
+                        end_date,
+                    ),
                 )
 
                 rows = cursor.fetchall()
@@ -361,7 +377,6 @@ def get_temperature_trend(city, range_name):
                 "data": data,
             }
 
-
         # ----------------------------------------------------
         # Monthly aggregation
         #
@@ -375,6 +390,27 @@ def get_temperature_trend(city, range_name):
             "1y",
         }:
 
+            if range_name == "6m":
+                month = today.month - 5
+                year = today.year
+
+                if month <= 0:
+                    month += 12
+                    year -= 1
+
+                cutoff_month = today.replace(
+                    year=year,
+                    month=month,
+                    day=1,
+                )
+
+            else:
+                cutoff_month = today.replace(
+                    year=today.year - 1,
+                    month=today.month,
+                    day=1,
+                )
+
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
@@ -383,9 +419,15 @@ def get_temperature_trend(city, range_name):
                         avg_temperature
                     FROM raw.fact_weather_monthly
                     WHERE LOWER(city) = LOWER(%s)
+                      AND weather_month >= %s
+                      AND weather_month <= %s
                     ORDER BY weather_month
                     """,
-                    (city,),
+                    (
+                        city,
+                        cutoff_month,
+                        today.replace(day=1),
+                    ),
                 )
 
                 rows = cursor.fetchall()
@@ -414,7 +456,6 @@ def get_temperature_trend(city, range_name):
                 "count": len(data),
                 "data": data,
             }
-
 
         # ----------------------------------------------------
         # Invalid range
@@ -752,3 +793,4 @@ def compare_cities(start: date, end: date):
     finally:
         if connection:
             connection.close()
+
